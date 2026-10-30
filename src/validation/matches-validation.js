@@ -6,14 +6,11 @@ export const MATCH_STATUS = {
   FINISHED: "finished",
 };
 
-const isValidIsoDateString = (value) => {
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) {
-    return false;
-  }
-  const date = new Date(parsed);
-  return !Number.isNaN(date.getTime());
-};
+// ISO 8601 datetime with a timezone (`Z` or `±HH:mm`), including real calendar dates.
+const isoDateTimeSchema = z.iso.datetime({ offset: true });
+
+const isValidIsoDateString = (value) =>
+  isoDateTimeSchema.safeParse(value).success;
 
 export const listMatchesQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
@@ -34,8 +31,8 @@ export const createMatchSchema = z
     endTime: z
       .string()
       .refine(isValidIsoDateString, { message: "Invalid ISO date string" }),
-    homeScore: z.coerce.number().int().nonnegative().optional(),
-    awayScore: z.coerce.number().int().nonnegative().optional(),
+    homeScore: z.number().int().nonnegative().optional(),
+    awayScore: z.number().int().nonnegative().optional(),
   })
   .superRefine((data, ctx) => {
     const start = new Date(data.startTime);
@@ -50,6 +47,6 @@ export const createMatchSchema = z
   });
 
 export const updateScoreSchema = z.object({
-  homeScore: z.coerce.number().int().nonnegative(),
-  awayScore: z.coerce.number().int().nonnegative(),
+  homeScore: z.number().int().nonnegative(),
+  awayScore: z.number().int().nonnegative(),
 });

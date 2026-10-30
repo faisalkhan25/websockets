@@ -8,11 +8,11 @@ import { desc } from "drizzle-orm";
 export const matchRouter = Router();
 const MAX_LIMIT = 100;
 
-matchRouter.get("/", async (req, res) => {
+matchRouter.get("/", async (req, res) => { 
     const parsedQuery = listMatchesQuerySchema.safeParse(req.query);
 
     if (!parsedQuery.success) {
-        return res.status(400).json({ error: "Invalid Payload", details: parsedQuery.error });
+        return res.status(400).json({ error: "Invalid Payload", details: parsedQuery.error.issues });
     }
 
     const limit = Math.min(parsedQuery.data.limit ?? 10, MAX_LIMIT);
@@ -20,15 +20,12 @@ matchRouter.get("/", async (req, res) => {
     try {
         const events = await db
         .select().from(matches)
-        .orderBy(desc(matches.startTime))
         .limit(limit)
         .orderBy(desc(matches.createdAt));
         res.status(200).json({ data: events });
-
     }catch(e) {
         res.status(500).json({
             error: "Failed to list matches",
-            details: JSON.stringify(e)
         })
     }
 });
@@ -36,7 +33,7 @@ matchRouter.get("/", async (req, res) => {
 matchRouter.post("/", async (req, res) => {
     const parsedBody = createMatchSchema.safeParse(req.body);
     if (!parsedBody.success) {
-        return res.status(400).json({ error: "Invalid Payload", details: parsedBody.error });
+        return res.status(400).json({ error: "Invalid Payload", details: parsedBody.error.issues });
     }
     const { data: { startTime, endTime, homeScore, awayScore } } = parsedBody;
 
@@ -54,7 +51,6 @@ matchRouter.post("/", async (req, res) => {
     } catch (e) {
         res.status(500).json({
             error: "Failed to create match",
-            details: JSON.stringify(e)
         })
     }
 })
